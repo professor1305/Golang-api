@@ -1,48 +1,18 @@
 package main
 
 import (
+	"api/Model"
+	"api/Services"
 	"log"
-	"strconv"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"api/Model"
-	
 )
 
-type Userdetail struct {
-	ID          int    `json:"ID"`
-	Address     string `json:"Address"`
-	Education   string `json:"Education"`
-	Gender      string `json:"Gender"`
-	Department  string `json:"Department"`
-}
+
 
 func main() {
 	app := fiber.New()
 	
-	userDetails := []Userdetail{
-		{
-			ID:          1,
-			Address:     "123 Main St",
-			Education:   "Bachelor's Degree",
-			Gender:      "Male",
-			Department:  "Engineering",
-		},
-		{
-			ID:          2,
-			Address:     "456 Elm St",
-			Education:   "Master's Degree",
-			Gender:      "Female",
-			Department:  "Marketing",
-		},
-		{
-			ID:          3,
-			Address:     "789 Oak St",
-			Education:   "PhD",
-			Gender:      "Male",
-			Department:  "Research",
-		},
-	}
 
 	// CORS middleware
 	app.Use(cors.New(cors.Config{
@@ -55,20 +25,7 @@ func main() {
 	app.Get("/Users", Model.GetUserDeatails)
 	app.Get("/User", Model.GetAllusers)
 	app.Post("/Users", Model.CreateUser)
-	app.Get("/Usersdetails", func(c *fiber.Ctx) error {
-    query := c.Query("ID")
-    var result []Userdetail
-    for _, user := range userDetails {
-        if query == strconv.Itoa(user.ID) {
-            result = append(result, user)
-        }
-    }
-    if len(result) > 0 {
-        return c.JSON(result)
-    } else {
-        return c.Status(fiber.StatusNotFound).JSON(map[string]string{"status": "not found"})
-    }
-})
+	app.Get("/Usersdetails", Services.GetUserDetailsByID)
 
 	log.Fatal(app.Listen(":3000"))
 }

@@ -12,8 +12,19 @@ type User struct {
 	Username string `json:"Username"`
 	Email    string `json:"Email"`
 }
+var Db *sql.DB
+
+func init() {
+	var err error
+	Db, err = sql.Open("postgres", "postgres://myuser:mypassword@0.0.0.0:5432/mydatabase?sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+}
+
 
 func GetUserDeatails(c *fiber.Ctx) error {
+		//Dialect := goqu.Dialect("postgres")
 		var users []User
 		query := c.Query("Username")
 		if query != "" {
@@ -37,16 +48,9 @@ func GetUserDeatails(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	}
 func GetAllusers(c *fiber.Ctx) error {
-    // Open a database connection
-    db, err := sql.Open("postgres", "postgres://myuser:mypassword@0.0.0.0:5432/mydatabase?sslmode=disable")
-    if err != nil {
-        return err
-    }
-    defer db.Close()
-
-    // Create a new instance of Goqu database with the Postgres dialect
-    dialect := goqu.Dialect("postgres")
-    query := dialect.From("usertable").Select("*")
+    
+    Dialect := goqu.Dialect("postgres")
+    query := Dialect.From("usertable").Select("*")
 
     // Execute the query and retrieve the results
     sqlString, _, err := query.ToSQL()
@@ -55,7 +59,7 @@ func GetAllusers(c *fiber.Ctx) error {
     }
 
     // Execute the query and retrieve the results
-    rows, err := db.Query(sqlString)
+    rows, err := Db.Query(sqlString)
     if err != nil {
         return err
     }
@@ -79,13 +83,28 @@ func GetAllusers(c *fiber.Ctx) error {
 }
 
 func CreateUser(c *fiber.Ctx) error {
-	// 	var newUser User
-	// 	if err := c.BodyParser(&newUser); err != nil {
-	// 		return c.Status(400).JSON(err)
-	// 	}
-	// 	users = append(users, newUser)
-	// 	fmt.Println(users)
-		return c.Status(200).JSON(fiber.Map{
-			"message": "User data received",
+
+	var newUser User
+	if err := c.BodyParser(&newUser); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
 		})
 	}
+
+	// Insert the new user into the database
+	dialect := goqu.Dialect("postgres")
+	query := dialect.Insert("usertable").Rows(newUser)
+
+	sqlString, _, err := query.ToSQL()
+	if err != nil {
+		return err
+	}
+
+	_, err = Db.Exec(sqlString)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(newUser)
+}
+

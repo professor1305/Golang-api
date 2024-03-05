@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS usertable (
+    ID SERIAL PRIMARY KEY,
+    Username VARCHAR(255) NOT NULL,
+    Email VARCHAR(255)
+);

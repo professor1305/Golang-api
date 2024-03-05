@@ -45,6 +45,7 @@ function getusers() {
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var data = JSON.parse(xhr.responseText);
+                console.log(data);
                 var container = document.getElementById('cardContainer');
 
                 // Clear existing cards

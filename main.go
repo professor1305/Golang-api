@@ -1,18 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"api/Model"
+	
 )
 
-type User struct {
-	ID       int    `json:"ID"`
-	Username string `json:"Username"`
-	Email    string `json:"Email"`
-}
 type Userdetail struct {
 	ID          int    `json:"ID"`
 	Address     string `json:"Address"`
@@ -23,10 +19,7 @@ type Userdetail struct {
 
 func main() {
 	app := fiber.New()
-	var users []User
-	users = append(users, User{ID: 1, Username: "alice", Email: "alice@example.com"})
-	users = append(users, User{ID: 2, Username: "bob", Email: "bob@example.com"})
-	users = append(users, User{ID: 3, Username: "charlie", Email: "charlie@example.com"})
+	
 	userDetails := []Userdetail{
 		{
 			ID:          1,
@@ -59,42 +52,9 @@ func main() {
 		AllowHeaders:     "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin",
 	}))
 
-	app.Get("/Users", func(c *fiber.Ctx) error {
-		query := c.Query("Username")
-		if query != "" {
-			var filterUsers []string
-			if query == "Username" {
-				for _, user := range users {
-					filterUsers = append(filterUsers, user.Username)
-				}
-				return c.JSON(filterUsers)
-			}
-			if query == "Email" {
-				for _, user := range users {
-					filterUsers = append(filterUsers, user.Email)
-				}
-				return c.JSON(filterUsers)
-			}
-			if query == "" {
-				return c.JSON(users)
-			}
-		}
-		return c.SendStatus(fiber.StatusOK)
-	})
-	app.Get("/User", func(c *fiber.Ctx) error {
-		return c.JSON(users)
-	})
-	app.Post("/Users", func(c *fiber.Ctx) error {
-		var newUser User
-		if err := c.BodyParser(&newUser); err != nil {
-			return c.Status(400).JSON(err)
-		}
-		users = append(users, newUser)
-		fmt.Println(users)
-		return c.Status(200).JSON(fiber.Map{
-			"message": "User data received",
-		})
-	})
+	app.Get("/Users", Model.GetUserDeatails)
+	app.Get("/User", Model.GetAllusers)
+	app.Post("/Users", Model.CreateUser)
 	app.Get("/Usersdetails", func(c *fiber.Ctx) error {
     query := c.Query("ID")
     var result []Userdetail

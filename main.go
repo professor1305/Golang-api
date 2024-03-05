@@ -25,6 +25,7 @@ func main() {
 	app.Get("/Users", Model.GetUserDeatails)
 	app.Get("/User", Model.GetAllusers)
 	app.Post("/Users", Model.CreateUser)
+	app.Post("/Login",Model.LoginUser)
 	app.Get("/Usersdetails", Services.GetUserDetailsByID)
 
 	log.Fatal(app.Listen(":3000"))

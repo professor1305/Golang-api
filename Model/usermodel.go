@@ -108,3 +108,22 @@ func CreateUser(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(newUser)
 }
 
+func LoginUser(c *fiber.Ctx) error {
+    email := c.Query("email")
+    password := c.Query("password")
+
+    // Query the database to check if the user exists
+    var username string
+    err := Db.QueryRow("SELECT username FROM usertable WHERE email = $1 AND password = $2", email, password).Scan(&username)
+    if err != nil {
+        // User does not exist or incorrect credentials
+        return c.Status(fiber.StatusNotFound).JSON(map[string]string{"error": "User not found or incorrect credentials"})
+    }
+
+    // User exists, store the username in the session
+    sess, _ := session.Get("sessionName", c)
+    sess.Set("username", username)
+    sess.Save()
+
+    return c.SendStatus(fiber.StatusOK)
+}

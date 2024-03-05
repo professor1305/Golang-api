@@ -1,0 +1,2 @@
+ALTER TABLE usertable
+ADD COLUMN password VARCHAR(255);

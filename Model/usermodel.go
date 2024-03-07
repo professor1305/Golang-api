@@ -1,16 +1,19 @@
 package Model
 
 import (
-	"github.com/gofiber/fiber/v2"
-	 "database/sql"
-	_ "github.com/lib/pq"
+	"database/sql"
+
 	"github.com/doug-martin/goqu/v9"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
+	_ "github.com/lib/pq"
 )
 
 type User struct {
 	ID       int    `json:"ID"`
 	Username string `json:"Username"`
 	Email    string `json:"Email"`
+	Password string `json:"Password"`
 }
 var Db *sql.DB
 
@@ -109,21 +112,39 @@ func CreateUser(c *fiber.Ctx) error {
 }
 
 func LoginUser(c *fiber.Ctx) error {
-    email := c.Query("email")
-    password := c.Query("password")
+    var req User
+    if err := c.BodyParser(&req); err != nil {
+        return err
+    }
 
-    // Query the database to check if the user exists
+    // Create a query using goqu
+    dialect := goqu.Dialect("postgres")
+    query := dialect.From("usertable").Select("username").
+        Where(goqu.Ex{"email": req.Email, "Password": req.Password})
+
+    // Execute the query
+    sqlString, _, err := query.ToSQL()
+    if err != nil {
+        return err
+    }
     var username string
-    err := Db.QueryRow("SELECT username FROM usertable WHERE email = $1 AND password = $2", email, password).Scan(&username)
+    err = Db.QueryRow(sqlString).Scan(&username)
     if err != nil {
         // User does not exist or incorrect credentials
         return c.Status(fiber.StatusNotFound).JSON(map[string]string{"error": "User not found or incorrect credentials"})
     }
-
-    // User exists, store the username in the session
-    sess, _ := session.Get("sessionName", c)
+	// Get the session from the context
+	store := session.New()
+    sess, err := store.Get(c)
+    if err != nil {
+        panic(err)
+    }
     sess.Set("username", username)
-    sess.Save()
+
+    // Save the session
+    if err := sess.Save(); err != nil {
+        return err
+    }
 
     return c.SendStatus(fiber.StatusOK)
 }

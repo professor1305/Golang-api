@@ -13,7 +13,6 @@ import (
 func main() {
 	app := fiber.New()
 	
-
 	// CORS middleware
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://127.0.0.1:5500",
